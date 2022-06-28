@@ -181,6 +181,9 @@ public extension NaverMap where MarkerItems == _DefaultMarkerItems {
 }
 
 struct NaverMap_Previews: PreviewProvider {
+    init() {
+        NMFAuthManager.shared().clientId = "mt3k8l7gvz"
+    }
     static var previews: some View {
         NaverMap(cameraPosition: .constant(NMFCameraPosition(CLLocationCoordinate2D(latitude: 37.4924020, longitude: 126.9212310))))
     }
