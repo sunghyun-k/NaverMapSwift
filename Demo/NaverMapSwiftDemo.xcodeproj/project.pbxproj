@@ -16,6 +16,7 @@
 
 /* Begin PBXFileReference section */
 		F20458D6286A8B2800E5B05D /* NaverMapSwift */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = NaverMapSwift; path = ../..; sourceTree = "<group>"; };
+		F209835C286B012F00E7B9D3 /* NaverMapSwift */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = NaverMapSwift; path = ..; sourceTree = "<group>"; };
 		F2484A48286A8929004C36E0 /* NaverMapSwiftDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NaverMapSwiftDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F2484A4B286A8929004C36E0 /* NaverMapSwiftDemoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NaverMapSwiftDemoApp.swift; sourceTree = "<group>"; };
 		F2484A4D286A8929004C36E0 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -39,6 +40,7 @@
 		F20458D9286A8B9C00E5B05D /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				F209835C286B012F00E7B9D3 /* NaverMapSwift */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
