@@ -47,7 +47,7 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
     
     public func updateUIView(_ mapView: NMFMapView, context: Context) {
         updateOptions(mapView)
-        updateCamera(mapView)
+        updateCamera(mapView, isCameraMoving: context.coordinator.isCameraMoving)
         updateMarker(mapView, coordinator: context.coordinator)
         updatePath(mapView, coordinator: context.coordinator)
     }
@@ -57,10 +57,11 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
         mapView.isTiltGestureEnabled = isTiltGestureEnabled
     }
     
-    private func updateCamera(_ mapView: NMFMapView) {
-        guard mapView.cameraPosition != cameraPosition else {
-            return
-        }
+    private func updateCamera(_ mapView: NMFMapView, isCameraMoving: Bool) {
+        guard mapView.cameraPosition != cameraPosition,
+              !isCameraMoving
+        else { return }
+        
         let cameraUpdate = NMFCameraUpdate(position: cameraPosition)
         cameraUpdate.animation = .easeIn
         mapView.moveCamera(cameraUpdate)
@@ -73,13 +74,16 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
         var ids: [AnyHashable] = Array(coordinator.markers.keys)
         for item in markerItems {
             let content = markerContent(item)
-            if let index = ids.firstIndex(of: item.id) { // 기존 마커 업데이트
+            // 기존 마커 업데이트
+            if let index = ids.firstIndex(of: item.id) {
                 guard let marker = coordinator.markers[item.id] else {
                     fatalError()
                 }
                 content.updateMarker(marker)
                 ids.remove(at: index)
-            } else { // 없을 경우 신규 생성 후 삽입
+            }
+            // 없을 경우 신규 생성 후 삽입
+            else {
                 let marker = content.makeMarker(mapView)
                 content.updateMarker(marker)
                 coordinator.markers[item.id] = marker
@@ -118,6 +122,7 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
         
         var markers = [AnyHashable: NMFMarker]()
         var path: NMFPath?
+        var isCameraMoving = false
         
         // MARK: - NMFMapViewTouchDelegate
         
@@ -129,6 +134,10 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
         
         public func mapViewCameraIdle(_ mapView: NMFMapView) {
             parent.cameraPosition = mapView.cameraPosition
+            isCameraMoving = false
+        }
+        public func mapView(_ mapView: NMFMapView, cameraWillChangeByReason reason: Int, animated: Bool) {
+            isCameraMoving = true
         }
     }
 }
