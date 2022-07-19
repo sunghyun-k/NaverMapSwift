@@ -47,7 +47,11 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
     
     public func updateUIView(_ mapView: NMFMapView, context: Context) {
         updateOptions(mapView)
-        updateCamera(mapView, isCameraMoving: context.coordinator.isCameraMoving)
+        updateCamera(
+            mapView,
+            isCameraMoving: context.coordinator.isCameraMoving,
+            animated: context.transaction.animation != nil
+        )
         updateMarker(mapView, coordinator: context.coordinator)
         updatePath(mapView, coordinator: context.coordinator)
     }
@@ -57,13 +61,14 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
         mapView.isTiltGestureEnabled = isTiltGestureEnabled
     }
     
-    private func updateCamera(_ mapView: NMFMapView, isCameraMoving: Bool) {
+    private func updateCamera(_ mapView: NMFMapView, isCameraMoving: Bool, animated: Bool) {
         guard mapView.cameraPosition != cameraPosition,
               !isCameraMoving
         else { return }
-        
         let cameraUpdate = NMFCameraUpdate(position: cameraPosition)
-        cameraUpdate.animation = .easeIn
+        if animated {
+            cameraUpdate.animation = .easeIn
+        }
         mapView.moveCamera(cameraUpdate)
     }
     
