@@ -1,6 +1,6 @@
 //
 //  Coordinate.swift
-//  Doongster
+//  
 //
 //  Created by Sunghyun Kim on 2022/06/25.
 //
