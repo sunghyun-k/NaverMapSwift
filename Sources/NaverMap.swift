@@ -65,7 +65,6 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
         if mapView.positionMode != positionMode {
             mapView.positionMode = positionMode
         }
-        print(Date().timeIntervalSince1970, "updated")
     }
     
     private func updateCamera(_ mapView: NMFMapView, coordinator: Coordinator, animated: Bool) {
@@ -159,7 +158,6 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
         
         // MARK: - NMFMapViewOptionDelegate
         public func mapViewOptionChanged(_ mapView: NMFMapView) {
-            print(Date().timeIntervalSince1970, mapView.positionMode.rawValue)
             updatingParentOptions = true
             parent.positionMode = mapView.positionMode
         }
