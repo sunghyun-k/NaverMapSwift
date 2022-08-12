@@ -12,12 +12,10 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
     
     /// 상위 뷰에서 카메라 포지션을 사용하기 위한 바인딩 프로퍼티.
     @Binding var cameraPosition: NMFCameraPosition
+    @Binding var positionMode: NMFMyPositionMode
     
     var lineCoordinates = [CLLocationCoordinate2D]()
-    
     var onMapTap: ((CLLocationCoordinate2D) -> Void)?
-    
-    var positionMode: NMFMyPositionMode = .disabled
     var isRotateGestureEnabled = true
     var isTiltGestureEnabled = true
     
@@ -27,11 +25,13 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
     
     public init(
         cameraPosition: Binding<NMFCameraPosition>,
+        positionMode: Binding<NMFMyPositionMode> = .constant(.disabled),
         lineCoordinates: [CLLocationCoordinate2D] = [CLLocationCoordinate2D](),
         markerItems: MarkerItems,
         markerContent: @escaping (MarkerItems.Element) -> NaverMapMarker
     ) {
         self._cameraPosition = cameraPosition
+        self._positionMode = positionMode
         self.lineCoordinates = lineCoordinates
         
         self.markerItems = markerItems
@@ -42,31 +42,31 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
         let mapView = NMFMapView()
         mapView.touchDelegate = context.coordinator
         mapView.addCameraDelegate(delegate: context.coordinator)
+        mapView.addOptionDelegate(delegate: context.coordinator)
         mapView.moveCamera(NMFCameraUpdate(position: cameraPosition))
         return mapView
     }
     
     public func updateUIView(_ mapView: NMFMapView, context: Context) {
-        updateOptions(mapView)
-        updateCamera(
-            mapView,
-            isCameraMoving: context.coordinator.isCameraMoving,
-            animated: context.transaction.animation != nil
-        )
+        guard !context.coordinator.updatingView else { return }
+        updateOptions(mapView, coordinator: context.coordinator)
+        updateCamera(mapView,
+                     animated: context.transaction.animation != nil)
         updateMarker(mapView, coordinator: context.coordinator)
         updatePath(mapView, coordinator: context.coordinator)
     }
     
-    private func updateOptions(_ mapView: NMFMapView) {
+    private func updateOptions(_ mapView: NMFMapView, coordinator: Coordinator) {
         mapView.isRotateGestureEnabled = isRotateGestureEnabled
         mapView.isTiltGestureEnabled = isTiltGestureEnabled
-        mapView.positionMode = positionMode
+        if mapView.positionMode != positionMode {
+            mapView.positionMode = positionMode
+        }
+        print(Date().timeIntervalSince1970, "updated")
     }
     
-    private func updateCamera(_ mapView: NMFMapView, isCameraMoving: Bool, animated: Bool) {
-        guard mapView.cameraPosition != cameraPosition,
-              !isCameraMoving
-        else { return }
+    private func updateCamera(_ mapView: NMFMapView, animated: Bool) {
+        guard mapView.cameraPosition != cameraPosition else { return }
         let cameraUpdate = NMFCameraUpdate(position: cameraPosition)
         if animated {
             cameraUpdate.animation = .easeIn
@@ -83,9 +83,7 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
             let content = markerContent(item)
             // 기존 마커 업데이트
             if let index = ids.firstIndex(of: item.id) {
-                guard let marker = coordinator.markers[item.id] else {
-                    fatalError()
-                }
+                guard let marker = coordinator.markers[item.id] else { fatalError() }
                 content.updateMarker(marker)
                 ids.remove(at: index)
             }
@@ -104,9 +102,7 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
     }
     
     private func updatePath(_ mapView: NMFMapView, coordinator: Coordinator) {
-        guard lineCoordinates.count > 1 else {
-            return
-        }
+        guard lineCoordinates.count > 1 else { return }
         let content = pathContent()
         if let path = coordinator.path {
             content.updatePath(path, coordinates: lineCoordinates, mapView: mapView)
@@ -121,7 +117,7 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
         return Coordinator(self)
     }
     
-    public class Coordinator: NSObject, NMFMapViewTouchDelegate, NMFMapViewCameraDelegate {
+    public class Coordinator: NSObject, NMFMapViewTouchDelegate, NMFMapViewCameraDelegate, NMFMapViewOptionDelegate {
         var parent: NaverMap
         init(_ parent: NaverMap) {
             self.parent = parent
@@ -129,7 +125,10 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
         
         var markers = [AnyHashable: NMFMarker]()
         var path: NMFPath?
-        var isCameraMoving = false
+//        var updatingCamera = false
+//        var updatingOptions = false
+        
+        var updatingView = false
         
         // MARK: - NMFMapViewTouchDelegate
         
@@ -141,10 +140,18 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
         
         public func mapViewCameraIdle(_ mapView: NMFMapView) {
             parent.cameraPosition = mapView.cameraPosition
-            isCameraMoving = false
+            updatingView = false
         }
         public func mapView(_ mapView: NMFMapView, cameraWillChangeByReason reason: Int, animated: Bool) {
-            isCameraMoving = true
+            updatingView = true
+        }
+        
+        // MARK: - NMFMapViewOptionDelegate
+        public func mapViewOptionChanged(_ mapView: NMFMapView) {
+            print(Date().timeIntervalSince1970, mapView.positionMode.rawValue)
+            updatingView = true
+            parent.positionMode = mapView.positionMode
+            
         }
     }
 }
@@ -178,12 +185,6 @@ public extension NaverMap {
         new.isTiltGestureEnabled = value
         return new
     }
-    
-    func positionMode(_ positionMode: NMFMyPositionMode) -> NaverMap {
-        var new = self
-        new.positionMode = positionMode
-        return new
-    }
 }
 
 public typealias _DefaultMarkerItems = [_DefaultMarkerItem]
@@ -194,9 +195,11 @@ public struct _DefaultMarkerItem: Identifiable {
 public extension NaverMap where MarkerItems == _DefaultMarkerItems {
     init(
         cameraPosition: Binding<NMFCameraPosition>,
+        positionMode: Binding<NMFMyPositionMode> = .constant(.disabled),
         lineCoordinates: [CLLocationCoordinate2D] = [CLLocationCoordinate2D]()
     ) {
         self._cameraPosition = cameraPosition
+        self._positionMode = positionMode
         self.lineCoordinates = lineCoordinates
         markerItems = []
     }
