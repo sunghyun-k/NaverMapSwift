@@ -48,15 +48,18 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
     }
     
     public func updateUIView(_ mapView: NMFMapView, context: Context) {
-        guard !context.coordinator.updatingView else { return }
         updateOptions(mapView, coordinator: context.coordinator)
-        updateCamera(mapView,
+        updateCamera(mapView, coordinator: context.coordinator,
                      animated: context.transaction.animation != nil)
         updateMarker(mapView, coordinator: context.coordinator)
         updatePath(mapView, coordinator: context.coordinator)
     }
     
     private func updateOptions(_ mapView: NMFMapView, coordinator: Coordinator) {
+        guard !coordinator.updatingParentOptions else {
+            coordinator.updatingParentOptions = false
+            return
+        }
         mapView.isRotateGestureEnabled = isRotateGestureEnabled
         mapView.isTiltGestureEnabled = isTiltGestureEnabled
         if mapView.positionMode != positionMode {
@@ -65,7 +68,12 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
         print(Date().timeIntervalSince1970, "updated")
     }
     
-    private func updateCamera(_ mapView: NMFMapView, animated: Bool) {
+    private func updateCamera(_ mapView: NMFMapView, coordinator: Coordinator, animated: Bool) {
+        guard !coordinator.updatingCamera else { return }
+        guard !coordinator.updatingParentCamera else {
+            coordinator.updatingParentCamera = false
+            return
+        }
         guard mapView.cameraPosition != cameraPosition else { return }
         let cameraUpdate = NMFCameraUpdate(position: cameraPosition)
         if animated {
@@ -117,6 +125,7 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
         return Coordinator(self)
     }
     
+    // MARK: - Coordinator
     public class Coordinator: NSObject, NMFMapViewTouchDelegate, NMFMapViewCameraDelegate, NMFMapViewOptionDelegate {
         var parent: NaverMap
         init(_ parent: NaverMap) {
@@ -125,10 +134,10 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
         
         var markers = [AnyHashable: NMFMarker]()
         var path: NMFPath?
-//        var updatingCamera = false
-//        var updatingOptions = false
         
-        var updatingView = false
+        var updatingParentOptions = false
+        var updatingParentCamera = false
+        var updatingCamera = false
         
         // MARK: - NMFMapViewTouchDelegate
         
@@ -139,19 +148,20 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
         // MARK: - NMFMapViewCameraDelegate
         
         public func mapViewCameraIdle(_ mapView: NMFMapView) {
+            updatingCamera = false
+            updatingParentCamera = true
             parent.cameraPosition = mapView.cameraPosition
-            updatingView = false
         }
         public func mapView(_ mapView: NMFMapView, cameraWillChangeByReason reason: Int, animated: Bool) {
-            updatingView = true
+            updatingCamera = true
+            parent.cameraPosition = mapView.cameraPosition
         }
         
         // MARK: - NMFMapViewOptionDelegate
         public func mapViewOptionChanged(_ mapView: NMFMapView) {
             print(Date().timeIntervalSince1970, mapView.positionMode.rawValue)
-            updatingView = true
+            updatingParentOptions = true
             parent.positionMode = mapView.positionMode
-            
         }
     }
 }
