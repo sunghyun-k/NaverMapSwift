@@ -17,6 +17,7 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
     
     var onMapTap: ((CLLocationCoordinate2D) -> Void)?
     
+    var positionMode: NMFMyPositionMode = .disabled
     var isRotateGestureEnabled = true
     var isTiltGestureEnabled = true
     
@@ -59,6 +60,7 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
     private func updateOptions(_ mapView: NMFMapView) {
         mapView.isRotateGestureEnabled = isRotateGestureEnabled
         mapView.isTiltGestureEnabled = isTiltGestureEnabled
+        mapView.positionMode = positionMode
     }
     
     private func updateCamera(_ mapView: NMFMapView, isCameraMoving: Bool, animated: Bool) {
@@ -176,6 +178,12 @@ public extension NaverMap {
         new.isTiltGestureEnabled = value
         return new
     }
+    
+    func positionMode(_ positionMode: NMFMyPositionMode) -> NaverMap {
+        var new = self
+        new.positionMode = positionMode
+        return new
+    }
 }
 
 public typealias _DefaultMarkerItems = [_DefaultMarkerItem]
@@ -191,14 +199,5 @@ public extension NaverMap where MarkerItems == _DefaultMarkerItems {
         self._cameraPosition = cameraPosition
         self.lineCoordinates = lineCoordinates
         markerItems = []
-    }
-}
-
-struct NaverMap_Previews: PreviewProvider {
-    init() {
-        NMFAuthManager.shared().clientId = "mt3k8l7gvz"
-    }
-    static var previews: some View {
-        NaverMap(cameraPosition: .constant(NMFCameraPosition(CLLocationCoordinate2D(latitude: 37.4924020, longitude: 126.9212310))))
     }
 }
