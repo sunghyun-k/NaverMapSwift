@@ -23,6 +23,9 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
     var markerContent: ((MarkerItems.Element) -> NaverMapMarker)?
     var pathContent: () -> NaverMapPath = { NaverMapPath() }
     
+    var logoAlign: NMFLogoAlign = .leftBottom
+    var logoMargin: UIEdgeInsets = .zero
+    
     public init(
         cameraPosition: Binding<NMFCameraPosition>,
         positionMode: Binding<NMFMyPositionMode> = .constant(.disabled),
@@ -65,6 +68,8 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
         if mapView.positionMode != positionMode {
             mapView.positionMode = positionMode
         }
+        mapView.logoAlign = logoAlign
+        mapView.logoMargin = logoMargin
     }
     
     private func updateCamera(_ mapView: NMFMapView, coordinator: Coordinator, animated: Bool) {
@@ -191,6 +196,18 @@ public extension NaverMap {
     func tiltGestureEnabled(_ value: Bool) -> NaverMap {
         var new = self
         new.isTiltGestureEnabled = value
+        return new
+    }
+    
+    func logoAlign(_ align: NMFLogoAlign) -> NaverMap {
+        var new = self
+        new.logoAlign = align
+        return new
+    }
+    
+    func logoMargin(_ margin: UIEdgeInsets) -> NaverMap {
+        var new = self
+        new.logoMargin = margin
         return new
     }
 }
