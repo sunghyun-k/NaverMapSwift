@@ -13,6 +13,7 @@ public struct NaverMapMarker {
     var position: CLLocationCoordinate2D
     var image: UIImage?
     var captionText: String?
+    var onTap: ((CLLocationCoordinate2D) -> Void)?
     
     public init(position: CLLocationCoordinate2D) {
         self.position = position
@@ -31,6 +32,12 @@ public struct NaverMapMarker {
             marker.iconImage = NMFOverlayImage(image: image)
         }
         marker.captionText = captionText ?? ""
+        marker.touchHandler = {
+            if let marker = $0 as? NMFMarker {
+                onTap?(marker.position.clCoordinate)
+            }
+            return true
+        }
     }
 }
 
@@ -44,6 +51,12 @@ public extension NaverMapMarker {
     func captionText(_ captionText: String) -> NaverMapMarker {
         var new = self
         new.captionText = captionText
+        return new
+    }
+    
+    func onTap(perform action: @escaping (CLLocationCoordinate2D) -> Void) -> NaverMapMarker {
+        var new = self
+        new.onTap = action
         return new
     }
 }
