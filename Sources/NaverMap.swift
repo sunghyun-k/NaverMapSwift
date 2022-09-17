@@ -96,13 +96,13 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
             // 기존 마커 업데이트
             if let index = ids.firstIndex(of: item.id) {
                 guard let marker = coordinator.markers[item.id] else { fatalError() }
-                content.updateMarker(marker)
+                content.updateMarker(marker, mapView)
                 ids.remove(at: index)
             }
             // 없을 경우 신규 생성 후 삽입
             else {
                 let marker = content.makeMarker(mapView)
-                content.updateMarker(marker)
+                content.updateMarker(marker, mapView)
                 coordinator.markers[item.id] = marker
             }
         }

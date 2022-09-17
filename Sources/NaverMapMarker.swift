@@ -11,7 +11,7 @@ import NMapsMap
 public struct NaverMapMarker {
     
     var position: CLLocationCoordinate2D
-    var image: UIImage?
+    var image: (() -> UIImage)?
     var captionText: String?
     var onTap: ((CLLocationCoordinate2D) -> Void)?
     
@@ -21,28 +21,30 @@ public struct NaverMapMarker {
     
     func makeMarker(_ mapView: NMFMapView) -> NMFMarker {
         let marker = NMFMarker()
-        updateMarker(marker)
-        marker.mapView = mapView
+        updateMarker(marker, mapView)
         return marker
     }
     
-    func updateMarker(_ marker: NMFMarker) {
-        marker.position = position.nmLatLng
-        if let image = image {
-            marker.iconImage = NMFOverlayImage(image: image)
-        }
-        marker.captionText = captionText ?? ""
-        marker.touchHandler = {
-            if let marker = $0 as? NMFMarker {
-                onTap?(marker.position.clCoordinate)
+    func updateMarker(_ marker: NMFMarker, _ mapView: NMFMapView) {
+        DispatchQueue.main.async {
+            marker.position = position.nmLatLng
+            if let image = image {
+                marker.iconImage = NMFOverlayImage(image: image())
             }
-            return true
+            marker.captionText = captionText ?? ""
+            marker.touchHandler = {
+                if let marker = $0 as? NMFMarker {
+                    onTap?(marker.position.clCoordinate)
+                }
+                return true
+            }
+            marker.mapView = mapView
         }
     }
 }
 
 public extension NaverMapMarker {
-    func image(_ image: UIImage) -> NaverMapMarker {
+    func image(_ image: @escaping () -> UIImage) -> NaverMapMarker {
         var new = self
         new.image = image
         return new
