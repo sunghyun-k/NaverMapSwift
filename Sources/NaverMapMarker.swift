@@ -13,6 +13,7 @@ public struct NaverMapMarker {
     var position: CLLocationCoordinate2D
     var image: (() -> UIImage)?
     var captionText: String?
+    var anchor: CGPoint = .init(x: 0.5, y: 1)
     var onTap: ((CLLocationCoordinate2D) -> Void)?
     
     public init(position: CLLocationCoordinate2D) {
@@ -38,6 +39,7 @@ public struct NaverMapMarker {
                 }
                 return true
             }
+            marker.anchor = anchor
             marker.mapView = mapView
         }
     }
@@ -59,6 +61,12 @@ public extension NaverMapMarker {
     func onTap(perform action: @escaping (CLLocationCoordinate2D) -> Void) -> NaverMapMarker {
         var new = self
         new.onTap = action
+        return new
+    }
+    
+    func anchor(_ point: CGPoint) -> NaverMapMarker {
+        var new = self
+        new.anchor = point
         return new
     }
 }
