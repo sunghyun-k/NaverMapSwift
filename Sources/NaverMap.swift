@@ -154,23 +154,17 @@ public struct NaverMap<MarkerItems>: UIViewRepresentable where MarkerItems: Rand
         public func mapViewCameraIdle(_ mapView: NMFMapView) {
             updatingCamera = false
             updatingParentCamera = true
-            Task { @MainActor in
-                parent.cameraPosition = mapView.cameraPosition
-            }
+            parent.cameraPosition = mapView.cameraPosition
         }
         public func mapView(_ mapView: NMFMapView, cameraWillChangeByReason reason: Int, animated: Bool) {
             updatingCamera = true
-            Task { @MainActor in
-                parent.cameraPosition = mapView.cameraPosition
-            }
+            parent.cameraPosition = mapView.cameraPosition
         }
         
         // MARK: - NMFMapViewOptionDelegate
         public func mapViewOptionChanged(_ mapView: NMFMapView) {
             updatingParentOptions = true
-            Task { @MainActor in
-                parent.cameraPosition = mapView.cameraPosition
-            }
+            parent.positionMode = mapView.positionMode
         }
     }
 }
